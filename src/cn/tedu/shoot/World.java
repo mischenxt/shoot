@@ -14,7 +14,7 @@ import java.util.TimerTask;
 import java.util.stream.IntStream;
 
 
-public class World extends JPanel {
+public class World extends JPanel implements Runnable {
 
     public static final int WIDTH = 400;
     public static final int HEIGHT = 700;
@@ -45,16 +45,7 @@ public class World extends JPanel {
     int iospeed = 0;
     private int state = START;
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        World world = new World();
-        frame.add(world);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(WIDTH, HEIGHT);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        world.action();
-    }
+
 
     public void checkGameOverAction() {
         if (logic.getHero().getLife() <= 0) {
@@ -150,4 +141,25 @@ public class World extends JPanel {
             case GAME_OVER -> g.drawImage(gameover, 0, 0, null);
         }
     }
+
+
+    public static void main(String[] args) {
+
+        JFrame frame = new JFrame();
+        World world = new World();
+        frame.add(world);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(WIDTH, HEIGHT);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        world.action();
+    }
+
+    @Override
+    public void run() {
+
+    }
+
+
+
 }
