@@ -11,10 +11,11 @@ public class Server {
     ServerSocket server;
     Socket socket;
     OutputStream os;
+
     {
         try {
             server = new ServerSocket(8080);
-            socket =  server.accept();
+            socket = server.accept();
             input();
         } catch (IOException e) {
             e.printStackTrace();
@@ -23,13 +24,13 @@ public class Server {
 
     private void input() {
         try {
-            InputStream is =  socket.getInputStream();
+            InputStream is = socket.getInputStream();
             Scanner scan = new Scanner(is);
             os = socket.getOutputStream();
-            byte [] datas = new byte[100];
+            byte[] datas = new byte[100];
             int len = -1;
-            while( (len = is.read())!=-1){
-                os.write(datas,0,len);
+            while ((len = is.read()) != -1) {
+                os.write(datas, 0, len);
             }
         } catch (IOException e) {
             e.printStackTrace();
