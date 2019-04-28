@@ -32,18 +32,13 @@ public class World extends JPanel {
 	private int state = START;
 
 	Socket socket = new Socket();
-
 	ObjectOutputStream objos ;
-
 	DataInputStream dis ;
 	DataOutputStream dos ;
-
 	ByteArrayOutputStream bos ;
 	ByteArrayInputStream bis ;
 
 
-
-	
 	public static BufferedImage start;
 	public static BufferedImage pause;
 	public static BufferedImage gameover;
@@ -60,7 +55,9 @@ public class World extends JPanel {
 	Map<String, FlyingObject> map = new HashMap<>();
 	int num = 1;
 	int iospeed = 0 ;
-	public void io(){
+
+
+    public void io(){
 		for(FlyingObject f : logic.getEnemies()){
 			map.put("e",f);
 		}
@@ -78,7 +75,8 @@ public class World extends JPanel {
 		}
 	}
 
-	public void action(){
+
+    public void action(){
 
 		MouseAdapter l = new MouseAdapter(){
 			public void mouseMoved(MouseEvent e){
@@ -164,12 +162,10 @@ public class World extends JPanel {
 		JFrame frame = new JFrame();
 		World world = new World();
 		frame.add(world);
-		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(WIDTH, HEIGHT);
 		frame.setLocationRelativeTo(null); 
 		frame.setVisible(true);
-
 		world.action();
 	}
 }
