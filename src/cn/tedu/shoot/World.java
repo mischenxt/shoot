@@ -7,8 +7,10 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
-import java.util.*;
+import java.util.TimerTask;
 
  
 public class World extends JPanel {
@@ -18,10 +20,10 @@ public class World extends JPanel {
 	public static final int WIDTH = 400;
 	public static final int HEIGHT = 700;
 	private static final long serialVersionUID = -7645613151332238326L;
-	private Sky sky = new Sky();
-	private Hero hero = new Hero();
-	private FlyingObject[] enemies = {}; 
-	private Bullet[] bullets = {}; 
+
+
+	Logic logic = new Logic();
+
 	
 	public static final int START = 0;
 	public static final int RUNNING = 1;
@@ -39,6 +41,8 @@ public class World extends JPanel {
 	ByteArrayOutputStream bos ;
 	ByteArrayInputStream bis ;
 
+
+
 	
 	public static BufferedImage start;
 	public static BufferedImage pause;
@@ -48,117 +52,8 @@ public class World extends JPanel {
 		pause = FlyingObject.loadImage("pause.png");
 		gameover = FlyingObject.loadImage("gameover.png");
 	}
-	
-	
-	public FlyingObject nextOne(){
-		Random rand = new Random();
-		int type = rand.nextInt(20);
-		if(type < 5){
-			return new Bee();
-		}else if(type < 12){
-			return new Airplane();
-		}else{
-			return new BigAirplane();
-		}
-	}
-	
-	int flyEnterIndex = 0;
-	public void enterAction(){
-		flyEnterIndex++;
-		if(flyEnterIndex%40==0){
-			FlyingObject obj = nextOne();
-			enemies = Arrays.copyOf(enemies,enemies.length+1);
-			enemies[enemies.length-1] = obj;
-		}
-	}
-	
-	public void stepAction(){
-		sky.step();
-		for(int i=0;i<enemies.length;i++){
-			enemies[i].step();
-		}
-		for(int i=0;i<bullets.length;i++){
-			bullets[i].step();
-		}
-	}
-	
-	int shootIndex = 0;
-	public void shootAction(){
-		shootIndex++;
-		if(shootIndex%30==0){
-			Bullet[] bs = hero.shoot();
-			bullets = Arrays.copyOf(bullets,bullets.length+bs.length);
-			System.arraycopy(bs,0,bullets,bullets.length-bs.length,bs.length);
-		}
-	}
-	
-	private int score = 0;
-	public void bangAction(){
-		for(int i=0;i<bullets.length;i++){
-			Bullet b = bullets[i];
-			for(int j=0;j<enemies.length;j++){
-				FlyingObject f = enemies[j];
-				if(b.isLife() && f.isLife() && b.hit(f)){
-					b.goDead();
-					f.goDead();
-					if(f instanceof Enemy){
-						Enemy e = (Enemy)f;
-						score += e.getScore();
-					}
-					if(f instanceof Award){
-						Award a = (Award)f;
-						int type = a.getType();
-						switch(type){
-						case Award.DOUBLE_FIRE:
-							hero.addDoubleFire();
-							break;
-						case Award.LIFE:
-							hero.addLife();
-							break;
-						}
-					}
-					
-				}
-			}
-		}
-	}
-	
-	public void outOfBoundsAction(){
-		int index = 0;
-		FlyingObject[] enemyLives = new FlyingObject[enemies.length];
-		for(int i=0;i<enemies.length;i++){
-			FlyingObject e = enemies[i];
-			if(!e.outOfBounds() && !e.isRemove()){
-				enemyLives[index++] = e;
-			}
-		}
-		enemies = Arrays.copyOf(enemyLives,index);
-		
-		index = 0;
-		Bullet[] bulletLives = new Bullet[bullets.length];
-		for(int i=0;i<bullets.length;i++){
-			Bullet b = bullets[i];
-			if(!b.outOfBounds() && !b.isRemove()){
-				bulletLives[index++] = b;
-			}
-		}
-		bullets = Arrays.copyOf(bulletLives,index);
-	}
-	
-	public void hitAction(){
-		for(int i=0;i<enemies.length;i++){
-			FlyingObject f = enemies[i];
-			if(f.isLife() && hero.hit(f)){
-				f.goDead();
-				hero.subtractLife();
-				hero.clearDoubleFire();
-				break;
-			}
-		}
-	}
-	
 	public void checkGameOverAction(){
-		if(hero.getLife()<=0){
+		if(logic.getHero().getLife()<=0){
 			state = GAME_OVER;
 		}
 	}
@@ -166,15 +61,15 @@ public class World extends JPanel {
 	int num = 1;
 	int iospeed = 0 ;
 	public void io(){
-		for(FlyingObject f : enemies){
+		for(FlyingObject f : logic.getEnemies()){
 			map.put("e",f);
 		}
-		map.put("sky",sky);
-		map.put("hero",hero);
+		map.put("sky",logic.getSky());
+		map.put("hero",logic.getHero());
 		try {
 			bos = new ByteArrayOutputStream();
 			objos = new ObjectOutputStream(bos);
-			objos.writeObject(hero);
+			objos.writeObject(logic.getHero());
 			byte[] bytes = bos.toByteArray();
 			OutputStream sos = socket.getOutputStream();
 			sos.write(bytes);
@@ -185,14 +80,12 @@ public class World extends JPanel {
 
 	public void action(){
 
-
-
 		MouseAdapter l = new MouseAdapter(){
 			public void mouseMoved(MouseEvent e){
 				if(state==RUNNING){
 					int x = e.getX();
 					int y = e.getY();
-					hero.moveTo(x, y);
+					logic.getHero().moveTo(x, y);
 				}
 			}
 			public void mouseClicked(MouseEvent e){
@@ -201,10 +94,8 @@ public class World extends JPanel {
 					state = RUNNING;
 					break;
 				case GAME_OVER:
-					score = 0;
-					hero = new Hero();
-					enemies = new FlyingObject[0];
-					bullets = new Bullet[0];
+					logic.getScore();
+					logic.restart();
 					state = START;
 					break;
 				}
@@ -228,15 +119,14 @@ public class World extends JPanel {
 		timer.schedule(new TimerTask(){
 			public void run(){
 				if(state==RUNNING){
-					io();
-					enterAction();
-					stepAction();
-					shootAction();
-					outOfBoundsAction();
-					bangAction();
-					hitAction();
+					logic.enterAction();
+					logic.stepAction();
+					logic.shootAction();
+					logic.outOfBoundsAction();
+					logic.bangAction();
+					logic.hitAction();
 					checkGameOverAction();
-					io();
+//					io();
 
 				}
 				repaint();
@@ -245,17 +135,17 @@ public class World extends JPanel {
 	}
 	
 	public void paint(Graphics g){
-		sky.paint(g);
-		hero.paint(g);
-		for(int i=0;i<enemies.length;i++){
-			enemies[i].paint(g);
+		logic.getSky().paint(g);
+		logic.getHero().paint(g);
+		for(int i=0;i<logic.getEnemies().length;i++){
+			logic.getEnemies()[i].paint(g);
 		}
-		for(int i=0;i<bullets.length;i++){
-			bullets[i].paint(g);
+		for(int i=0;i<logic.getBullets().length;i++){
+			logic.getBullets()[i].paint(g);
 		}
 		
-		g.drawString("SCORE: "+score,10,25);
-		g.drawString("LIFE: "+hero.getLife(),10,45);
+		g.drawString("SCORE: "+logic.getScore(),10,25);
+		g.drawString("LIFE: "+logic.getHero().getLife(),10,45);
 		
 		switch(state){
 		case START:
