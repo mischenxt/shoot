@@ -16,8 +16,8 @@ import java.util.stream.IntStream;
 
 public class World extends JPanel implements Runnable {
 
-    public static final int WIDTH = 400;
-    public static final int HEIGHT = 700;
+    public static final int WIDTH = 450;
+    public static final int HEIGHT = 750;
     public static final int START = 0;
     public static final int RUNNING = 1;
     public static final int PAUSE = 2;
